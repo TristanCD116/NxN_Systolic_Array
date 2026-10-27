@@ -32,3 +32,43 @@ An N×N systolic array that multiplies two signed matrices (C = A × B), written
 - **Interconnect:** `a_w[i][j]` and `b_w[i][j]` feed PE(i,j). Each array has one extra entry in the direction of travel for the last PE’s output.
 - **Generate:** a nested `generate` loop instantiates the N×N PEs and wires each one’s outputs into its neighbors’ inputs.
 
+# Running the Simulation
+
+### ModelSim
+
+The design uses unpacked array ports, so use a simulator with SystemVerilog support. Download the relevant files and use the following commands in ModelSim:
+
+```systemverilog
+vlib work
+vlog -sv sys_NxN_multiplier.sv tb_sys_NxN_multiplier.sv
+vsim -voptargs=+acc work.tb_sys_NxN_multiplier
+add wave -r /*
+config wave -signalnamewidth 1
+run 450ns
+```
+To test a different size, simply change `N` and `W` in the testbench file
+
+### Expected Output:
+
+```
+4x4 SYSTOLIC ARRAY, 8-bit inputs, 18-bit accumulators
+Test 0: PASS (all 16 elements matched)
+Test 1: PASS (all 16 elements matched)
+Test 2: PASS (all 16 elements matched)
+STATUS: ALL TESTS PASSED
+```
+
+### Verification
+
+1) Random - Random signed values over the full input range
+2) Worst case - Every entry is the most negative value, checking the accumulator width
+3) Identity × random - Result should equal the second matrix
+
+Results are compared against a software golden model computed in the testbench.
+
+# Results 
+Simulated using Quartus Prime Lite on Cyclone V 5CGXFC7C7F23C8, slow 85°C model, virtual I/O
+
+| N | W | ALMs | Registers | DSPs | Fmax | Latency |
+|---|---|------|-----------|------|------|---------|
+| 4 | 8 |  598   |    421      |  16  | 93 MHz | 10 cycles (~107 ns) |
